@@ -1,0 +1,23 @@
+Here is the flow of the entire LDPC process:
+This would help to write the code flow in a better way
+
+1) Things requried as an input to the user:
+    a) H Matrix, these are some standard matrix that has rules defined for checking.
+        i) Each different process\applicaiton (eg. NAND SSD checking, 5G signal, satalite communication) has a different H Martix.
+    b) The raw data that needs to be transmitted.
+
+    These two are the things that are required as an input for the process.
+2) Create a encoder, which is used to encode the rawdata.
+    a) Create a "Generator Matrix (G)" from the H matrix using "Gauss-Jordan Elimination"
+    b) Code_word  =  Generator Matrix * Raw Data.
+    c) The encoded data.
+
+3) Convert the encoded data to singals +1.0V for 1 and -1.0V for 0.
+
+4) To simulate errors in the code, add noise to the signal. 
+
+5) Receive this noisy signal, and convert the voltage to LLR 
+
+This is the End of the first two parts, encoding and transmitting.
+
+6) Finally use algorithm like "Min-Sum Algoritham" to decode the noisy input.
