@@ -1,7 +1,3 @@
-//   ldpc_code.cpp  THE H MATRIX + ENCODER   (build / load / save codes, encode payloads)
-//   channel.cpp    THE NOISE                (noisy test codewords -> LLRs, file I/O)
-//   decoder.cpp    THE DECODER              (normalized min-sum)
-//   main.cpp       THE PROGRAM              (commands: test, gencode, genframes, sweep, decode, compare)
 #pragma once
 #include <cstdint>
 #include <cstdlib>
@@ -11,8 +7,6 @@
 #include <vector>
 
 //  H matrix
-// H stored as a sparse Tanner graph. Every "1" in H is one EDGE.
-// Edges are numbered row by row, so check c owns edges chk_ptr[c] .. chk_ptr[c+1]-1.
 struct LdpcCode {
     int n = 0;   // number of bits    (columns of H)
     int m = 0;   // number of checks  (rows of H)
@@ -41,7 +35,7 @@ void build_encoder(LdpcCode& code);
 void encode(const LdpcCode& code, const uint8_t* info, uint8_t* codeword);
 bool syndrome_ok(const LdpcCode& code, const uint8_t* c);
 
-// ============================================================ noise + files
+//noise + files
 struct FrameSet {
     int n = 0;                   // bits per codeword
     int frames = 0;              // number of codewords
