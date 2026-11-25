@@ -5,7 +5,7 @@
 //   Step 3  bit node:    v2c[e] = Lch + sum of the OTHER incoming c2v
 //   Step 4  decision:    total = Lch + sum of ALL incoming c2v; bit = (total < 0)
 //   Step 5  syndrome:    stop if every check is satisfied
-//
+
 #include "ldpc.hpp"
 
 #include <cmath>
