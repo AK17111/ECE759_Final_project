@@ -1,16 +1,11 @@
 // decoder.cpp  flooding normalized min-sum
-//
-// Matches the steps in the team's Tanner-graph guide (LDPC_1.pdf):
+
 //   Step 1  init:        v2c[e] = Lch(bit of e)
 //   Step 2  check node:  c2v[e] = alpha * (sign of the OTHER inputs) * (min |OTHER inputs|)
 //   Step 3  bit node:    v2c[e] = Lch + sum of the OTHER incoming c2v
 //   Step 4  decision:    total = Lch + sum of ALL incoming c2v; bit = (total < 0)
 //   Step 5  syndrome:    stop if every check is satisfied
 //
-// Floating-point note: every decoder version must add the c2v messages of a
-// bit in the SAME order (ascending edge id, as stored in var_edge) and use
-// the same formulas below, or a few borderline bits can differ (compile CUDA
-// with --fmad=false).
 #include "ldpc.hpp"
 
 #include <cmath>
