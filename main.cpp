@@ -16,7 +16,7 @@
 
 #include "ldpc.hpp"
 
-// ------------------------------------------------------------------ measuring
+// measuring
 struct Stats {
     long info_bit_errors = 0, frame_errors = 0, total_iters = 0;
     double seconds = 0;
@@ -91,7 +91,7 @@ static DecodeParams read_params(const Args& a, const LdpcCode& code) {
     return p;
 }
 
-// ------------------------------------------------------------------ commands
+//  commands
 static int cmd_gencode(const Args& a) {
     LdpcCode code = make_peg_code((int)a.num("--n", 96), (int)a.num("--dv", 3), (int)a.num("--dc", 6),
                                   (uint64_t)a.num("--seed", 1));
@@ -170,7 +170,7 @@ static int cmd_compare(int argc, char** argv) {
     return same ? 0 : 1;
 }
 
-// ------------------------------------------------------------------ tests
+// --- tests
 static int failures = 0;
 static void check(bool cond, const char* msg) {
     std::printf("  %s  %s\n", cond ? "PASS" : "FAIL", msg);
@@ -280,7 +280,7 @@ static int cmd_test() {
     return failures ? 1 : 0;
 }
 
-// ------------------------------------------------------------------ main
+// main
 int main(int argc, char** argv) {
     try {
         std::string cmd = argc > 1 ? argv[1] : "";
