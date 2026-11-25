@@ -26,14 +26,14 @@ int decode_frame(const LdpcCode& code, const float* llr, uint8_t* bits,
     float* v2c = ws.v2c.data();
     float* c2v = ws.c2v.data();
 
-    // Step 1: every edge starts with its bit's channel LLR.
+    // every edge starts with its bit's channel LLR.
     for (int e = 0; e < E; ++e) v2c[e] = llr[code.edge_var[e]];
     for (int j = 0; j < code.n; ++j) bits[j] = llr[j] < 0.0f;
     if (p.early_stop && all_checks_satisfied(code, bits)) { *ok = true; return 0; }
 
     int it = 0;
     for (it = 1; it <= p.max_iters; ++it) {
-        // Step 2: check-node update. Only the two smallest magnitudes are needed:
+        // check-node update. Only the two smallest magnitudes are needed:
         // the edge that holds the smallest gets the second smallest, everyone else
         // gets the smallest. The sign is the product of the others' signs.
         for (int c = 0; c < code.m; ++c) {
@@ -54,7 +54,7 @@ int decode_frame(const LdpcCode& code, const float* llr, uint8_t* bits,
                 c2v[e] = s ? -mag : mag;
             }
         }
-        // Steps 3 + 4: bit-node update and hard decision.
+        // Steps bit-node update and hard decision.
         for (int j = 0; j < code.n; ++j) {
             const int beg = code.var_ptr[j], end = code.var_ptr[j + 1];
             float total = llr[j];
@@ -62,10 +62,10 @@ int decode_frame(const LdpcCode& code, const float* llr, uint8_t* bits,
             bits[j] = total < 0.0f;
             for (int k = beg; k < end; ++k) {
                 const int e = code.var_edge[k];
-                v2c[e] = total - c2v[e];  // "all" minus "own" = extrinsic
+                v2c[e] = total - c2v[e]; 
             }
         }
-        // Step 5: syndrome check / early stopping.
+        // syndrome check / early stopping.
         if (p.early_stop && all_checks_satisfied(code, bits)) { *ok = true; return it; }
     }
     *ok = all_checks_satisfied(code, bits);
