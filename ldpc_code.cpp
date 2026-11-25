@@ -1,5 +1,5 @@
-// ldpc_code.cpp - building, loading and encoding LDPC codes.
-#include "ldpc_code.hpp"
+// ldpc_code.cpp- THE H MATRIX and THE ENCODER: build/load/save codes, encode payloads.
+#include "ldpc.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -61,6 +61,7 @@ LdpcCode load_alist(const std::string& path) {
 
 void save_alist(const LdpcCode& code, const std::string& path) {
     std::ofstream out(path);
+    if (!out) throw std::runtime_error("cannot write " + path + " (does the folder exist?)");
     std::vector<std::vector<int>> cols(code.n);
     int max_row = 0, max_col = 0;
     for (int c = 0; c < code.m; ++c) {

@@ -1,0 +1,5 @@
+ldpc
+data/
+*.dec
+*.out
+*.err

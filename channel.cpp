@@ -1,5 +1,5 @@
-// channel.cpp - noisy-frame generation and binary file I/O.
-#include "channel.hpp"
+// channel.cpp - make noisy test codewords (LLRs) and save/load them as files.
+#include "ldpc.hpp"
 
 #include <cmath>
 #include <cstring>
