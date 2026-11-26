@@ -9,33 +9,39 @@
 #include <set>
 #include <stdexcept>
 
-LdpcCode code_from_rows(int n, const std::vector<std::vector<int>>& rows_in) {
+LdpcCode code_from_rows(int n, const std::vector<std::vector<int>>& rows) {
     LdpcCode code;
-    code.n = n;
-    code.m = (int)rows_in.size();
-    code.chk_ptr.assign(code.m + 1, 0);
-    for (int c = 0; c < code.m; ++c) {
-        std::vector<int> row = rows_in[c];
-        std::sort(row.begin(), row.end());
-        row.erase(std::unique(row.begin(), row.end()), row.end());
-        for (int v : row) {
-            if (v < 0 || v >= n) throw std::runtime_error("bit index out of range");
-            code.edge_var.push_back(v);
+    code.n = n;                 // number of bits  (columns of H)
+    code.m = (int)rows.size();  // number of rules (rows of H)
+
+    code.chk_ptr.push_back(0);
+    for (int c = 0; c < code.m; c++) {
+        std::vector<int> bits = rows[c];
+        std::sort(bits.begin(), bits.end());                 // keep each rule's bits in order
+        for (int i = 0; i < (int)bits.size(); i++) {
+            if (i > 0 && bits[i] == bits[i - 1]) continue;   // skip a bit listed twice
+            if (bits[i] < 0 || bits[i] >= n) throw std::runtime_error("bit index out of range");
+            code.edge_var.push_back(bits[i]);                // add one edge
         }
-        code.chk_ptr[c + 1] = (int)code.edge_var.size();
+        code.chk_ptr.push_back((int)code.edge_var.size()); // next rule starts here
     }
-    // Bit side: walk edges in order so each bit's edge list is ascending.
-    std::vector<std::vector<int>> per_var(n);
-    for (int e = 0; e < code.num_edges(); ++e) per_var[code.edge_var[e]].push_back(e);
-    code.var_ptr.assign(n + 1, 0);
-    for (int v = 0; v < n; ++v) {
-        code.var_edge.insert(code.var_edge.end(), per_var[v].begin(), per_var[v].end());
-        code.var_ptr[v + 1] = (int)code.var_edge.size();
+
+
+    std::vector<std::vector<int>> edges_of_bit(n);
+    for (int e = 0; e < code.num_edges(); e++) {
+        int bit = code.edge_var[e];
+        edges_of_bit[bit].push_back(e);
+    }
+
+    code.var_ptr.push_back(0);
+    for (int bit = 0; bit < n; bit++) {
+        for (int e : edges_of_bit[bit]) code.var_edge.push_back(e);
+        code.var_ptr.push_back((int)code.var_edge.size());
     }
     return code;
 }
 
-// ---------------------------------------------------------------- alist I/O
+//  alist I/O
 LdpcCode load_alist(const std::string& path) {
     std::ifstream in(path);
     if (!in) throw std::runtime_error("cannot open " + path);
@@ -87,7 +93,7 @@ void save_alist(const LdpcCode& code, const std::string& path) {
     }
 }
 
-// ------------------------------------------------------ PEG construction
+// PEG construction
 // For each bit, add its dv edges one at a time. Each new edge goes to the
 // check that is FARTHEST from the bit in the graph built so far (so no short
 // cycles are created), breaking ties by lowest current check degree.
@@ -148,7 +154,7 @@ long count_4cycles(const LdpcCode& code) {
     return cycles;
 }
 
-// -------------------------------------------------- systematic encoder
+// systematic encoder
 void build_encoder(LdpcCode& code) {
     const int n = code.n, words = (n + 63) / 64;
     std::vector<std::vector<uint64_t>> h(code.m, std::vector<uint64_t>(words, 0));
