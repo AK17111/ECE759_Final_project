@@ -1,4 +1,3 @@
-Makefile
 # Build:  make        -> creates ./ldpc
 # Test:   make test
 # No -ffast-math: it reorders float math and would break exact matching with OpenMP/CUDA.
