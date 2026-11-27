@@ -58,6 +58,8 @@ struct DecodeParams {
     int max_iters = 20;
     float alpha = 0.75f;      // scaling factor (1.0 = plain min-sum)
     bool early_stop = true;   // stop as soon as every parity check is satisfied
+    int threads = 0;          // 0 = serial; 1,2,4,... = OpenMP with that many threads
+    bool dynamic_sched = true;  // OpenMP: true = schedule(dynamic,4), false = schedule(static)
 };
 
 // Scratch memory: one message per edge in each direction. Reused for every codeword.
@@ -73,6 +75,8 @@ int decode_frame(const LdpcCode& code, const float* llr, uint8_t* bits,
                  const DecodeParams& p, DecoderWorkspace& ws, bool* ok);
 void decode_batch_serial(const LdpcCode& code, int frames, const float* llr,
                          uint8_t* bits, int* iters, const DecodeParams& p);
+void decode_batch_omp(const LdpcCode& code, int frames, const float* llr,
+                      uint8_t* bits, int* iters, const DecodeParams& p);
 
 //  command-line helper
 struct Args {
