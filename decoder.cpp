@@ -80,3 +80,36 @@ void decode_batch_serial(const LdpcCode& code, int frames, const float* llr,
         iters[f] = decode_frame(code, llr + (size_t)f * code.n, bits + (size_t)f * code.n, p, ws, &ok);
     }
 }
+// ---------------------------------------------------------------- OpenMP version
+// Same decoder, but different codewords are decoded at the same time on different cores.
+// Each codeword is still decoded by decode_frame exactly as in serial, so the output
+// is bit-for-bit identical to decode_batch_serial.
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+void decode_batch_omp(const LdpcCode& code, int frames, const float* llr,
+                      uint8_t* bits, int* iters, const DecodeParams& p) {
+#ifdef _OPENMP
+    omp_set_num_threads(p.threads);
+#endif
+    #pragma omp parallel                       // start a team of p.threads threads
+    {
+        DecoderWorkspace ws(code);             // PRIVATE: each thread gets its own message arrays
+        if (p.dynamic_sched) {
+            #pragma omp for schedule(dynamic, 4)   // idle threads grab the next 4 codewords
+            for (int f = 0; f < frames; ++f) {
+                bool ok;
+                iters[f] = decode_frame(code, llr + (size_t)f * code.n,
+                                        bits + (size_t)f * code.n, p, ws, &ok);
+            }
+        } else {
+            #pragma omp for schedule(static)       // each thread gets one fixed block of codewords
+            for (int f = 0; f < frames; ++f) {
+                bool ok;
+                iters[f] = decode_frame(code, llr + (size_t)f * code.n,
+                                        bits + (size_t)f * code.n, p, ws, &ok);
+            }
+        }
+    }
+}
