@@ -6,6 +6,7 @@
 //   ./ldpc compare   results/serial.dec results/omp.dec
 //
 // Decoder options (sweep / decode): --iters 20  --alpha 0.75  --no-early-stop  --repeat 3  --seed 7
+// OpenMP options   (sweep / decode): --threads 4  --schedule dynamic|static   (no --threads = serial)
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -20,6 +21,7 @@
 struct Stats {
     long info_bit_errors = 0, frame_errors = 0, total_iters = 0;
     double seconds = 0;
+    int threads = 0;   // 0 = serial
 };
 
 // Decode all codewords (timed), then count errors against the original bits.
@@ -29,9 +31,13 @@ static Stats run_and_measure(const LdpcCode& code, const FrameSet& fs, const Dec
     iters.assign(fs.frames, 0);
     Stats s;
     s.seconds = 1e30;
+    s.threads = p.threads;
     for (int r = 0; r < repeat; ++r) {  // keep the fastest run
         auto t0 = std::chrono::steady_clock::now();
-        decode_batch_serial(code, fs.frames, fs.llr.data(), bits.data(), iters.data(), p);
+        if (p.threads > 0)
+            decode_batch_omp(code, fs.frames, fs.llr.data(), bits.data(), iters.data(), p);
+        else
+            decode_batch_serial(code, fs.frames, fs.llr.data(), bits.data(), iters.data(), p);
         auto t1 = std::chrono::steady_clock::now();
         s.seconds = std::min(s.seconds, std::chrono::duration<double>(t1 - t0).count());
     }
@@ -61,7 +67,7 @@ static std::string print_row(const LdpcCode& code, float ebno, int frames, const
     std::ostringstream o;
     o << code.n << "," << code.k << "," << ebno << "," << frames << "," << s.info_bit_errors << ","
       << s.frame_errors << "," << ber << "," << fer << "," << (double)s.total_iters / frames << ","
-      << s.seconds * 1e3 << "," << info_mbps << "," << coded_mbps;
+      << s.seconds * 1e3 << "," << info_mbps << "," << coded_mbps << "," << s.threads;
     return o.str();
 }
 
@@ -70,7 +76,7 @@ static void append_csv(const std::string& path, const std::vector<std::string>& 
     std::ofstream o(path, std::ios::app);
     if (!o) throw std::runtime_error("cannot write " + path + " (does the folder exist?)");
     if (!exists)
-        o << "n,k,ebno_db,frames,info_bit_errors,frame_errors,ber,fer,avg_iters,time_ms,info_mbps,coded_mbps\n";
+        o << "n,k,ebno_db,frames,info_bit_errors,frame_errors,ber,fer,avg_iters,time_ms,info_mbps,coded_mbps,threads\n";
     for (auto& r : rows) o << r << "\n";
 }
 
@@ -85,9 +91,14 @@ static DecodeParams read_params(const Args& a, const LdpcCode& code) {
     p.max_iters = (int)a.num("--iters", 20);
     p.alpha = (float)a.real("--alpha", 0.75);
     p.early_stop = !a.has("--no-early-stop");
-    std::printf("code: n=%d m=%d edges=%d k=%d rate=%.4f | iters=%d alpha=%.2f early_stop=%d\n",
+    p.threads = (int)a.num("--threads", 0);                  // 0 = serial
+    p.dynamic_sched = a.str("--schedule", "dynamic") != "static";
+    std::printf("code: n=%d m=%d edges=%d k=%d rate=%.4f | iters=%d alpha=%.2f early_stop=%d | %s\n",
                 code.n, code.m, code.num_edges(), code.k, code.rate(), p.max_iters, p.alpha,
-                (int)p.early_stop);
+                (int)p.early_stop,
+                p.threads > 0 ? (std::string("OpenMP threads=") + std::to_string(p.threads) +
+                                 (p.dynamic_sched ? " schedule=dynamic" : " schedule=static")).c_str()
+                              : "serial");
     return p;
 }
 
