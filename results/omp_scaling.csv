@@ -1,0 +1,2 @@
+n,k,ebno_db,frames,info_bit_errors,frame_errors,ber,fer,avg_iters,time_ms,info_mbps,coded_mbps,threads
+2048,1024,1.75,4000,14847,543,0.00362476,0.13575,13.9195,2114.17,1.9374,3.87481,0
